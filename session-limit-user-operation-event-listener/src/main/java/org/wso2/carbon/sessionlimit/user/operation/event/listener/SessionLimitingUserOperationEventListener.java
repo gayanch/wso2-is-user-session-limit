@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.sessionlimit.user.operation.event.listener.util.DataPublisherDbUtil;
+import org.wso2.carbon.sessionlimit.user.operation.event.listener.util.SessionCache;
 import org.wso2.carbon.user.api.Permission;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -12,6 +13,7 @@ import org.wso2.carbon.user.core.common.AbstractUserOperationEventListener;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class SessionLimitingUserOperationEventListener extends AbstractUserOperationEventListener {
 
@@ -30,13 +32,14 @@ public class SessionLimitingUserOperationEventListener extends AbstractUserOpera
     public boolean doPreAuthenticate(String userName, Object credential, UserStoreManager userStoreManager) throws UserStoreException {
         boolean isAllowed = false;
         try {
-            int activeSessions = DataPublisherDbUtil.getActiveSessionCount(userName);
+            int activeSessions = SessionCache.getActiveSessionCount(userName);
             if (activeSessions < 1) {
                 isAllowed = true;
+                SessionCache.updateActiveSessionCount(userName);
             } else {
                 log.warn("Authentication blocked for user: " + userName + ", Reason: Active session limit exceeded.");
             }
-        } catch (SQLException e) {
+        } catch (ExecutionException e) {
             log.error("Error retrieving session information of user [" + userName + "]", e);
         }
         return isAllowed;

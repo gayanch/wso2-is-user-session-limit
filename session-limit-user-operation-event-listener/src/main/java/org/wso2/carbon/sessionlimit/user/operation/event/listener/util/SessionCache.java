@@ -25,9 +25,6 @@ public class SessionCache {
     }
 
     public static void updateActiveSessionCount(String username) throws ExecutionException {
-        Integer count = sessionCache.get(username);
-        if (count != null) {
-            sessionCache.put(username, count + 1);
-        }
+            sessionCache.refresh(username);
     }
 }

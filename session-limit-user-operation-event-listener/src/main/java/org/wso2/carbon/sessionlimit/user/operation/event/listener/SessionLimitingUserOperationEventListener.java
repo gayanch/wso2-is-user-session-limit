@@ -32,10 +32,14 @@ public class SessionLimitingUserOperationEventListener extends AbstractUserOpera
     public boolean doPreAuthenticate(String userName, Object credential, UserStoreManager userStoreManager) throws UserStoreException {
         boolean isAllowed = false;
         try {
-            int activeSessions = SessionCache.getActiveSessionCount(userName);
-            if (activeSessions < 1) {
-                isAllowed = true;
+            int cachedActiveSessions = SessionCache.getActiveSessionCount(userName);
+            if (cachedActiveSessions < 1) {
                 SessionCache.updateActiveSessionCount(userName);
+                int activeSessions = SessionCache.getActiveSessionCount(userName);
+
+                if (activeSessions < 1) {
+                    isAllowed = true;
+                }
             } else {
                 log.warn("Authentication blocked for user: " + userName + ", Reason: Active session limit exceeded.");
             }
